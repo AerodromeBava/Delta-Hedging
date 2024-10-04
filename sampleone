@@ -1,0 +1,37 @@
+import ccxt  # Para interagir com APIs de exchanges
+import numpy as np
+
+# Inicializa APIs para Orca, Raydium ou outros DEX
+class SuperApp:
+    def __init__(self, dex_api):
+        self.api = dex_api
+
+    # Obter preços atuais dos ativos
+    def get_price(self, asset_pair):
+        return self.api.fetch_ticker(asset_pair)
+
+    # Calcular delta
+    def calculate_delta(self, pool_assets, price):
+        total_value = sum(asset * price[i] for i, asset in enumerate(pool_assets))
+        delta = [(asset * price[i] / total_value) - 0.5 for i, asset in enumerate(pool_assets)]
+        return delta
+
+    # Ajustar/rebalancear com base no delta
+    def rebalance(self, delta, pool_assets, prices):
+        for i, d in enumerate(delta):
+            if abs(d) > 0.01:  # limite
+                amount_to_trade = d * pool_assets[i]
+                self.execute_trade(pool_assets[i], amount_to_trade, prices[i])
+
+    # Função de exemplo para executar uma troca
+    def execute_trade(self, asset, amount, price):
+        print(f"Trocando {amount} de {asset} ao preço {price}")
+        # Chamada API para executar a troca no DEX
+
+# Exemplo de uso
+api = ccxt.raydium()  # Exemplo para Raydium, ajustar para Orca
+app = SuperApp(api)
+price = app.get_price('ETH/USDC')
+pool_assets = [10, 1000]  # Exemplo de saldo em ETH e USDC
+delta = app.calculate_delta(pool_assets, price)
+app.rebalance(delta, pool_assets, price)
